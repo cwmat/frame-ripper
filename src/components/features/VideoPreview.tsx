@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FileVideo, X } from 'lucide-react';
 import { formatFileSize } from '../../utils/fileUtils';
@@ -8,11 +8,24 @@ import { Button } from '../ui/Button';
 interface VideoPreviewProps {
   videoInfo: VideoInfo;
   onRemove: () => void;
+  onTimeUpdate?: (currentTime: number) => void;
   disabled?: boolean;
 }
 
-export function VideoPreview({ videoInfo, onRemove, disabled }: VideoPreviewProps) {
+export function VideoPreview({ videoInfo, onRemove, onTimeUpdate, disabled }: VideoPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleTimeUpdate = useCallback(() => {
+    if (videoRef.current && onTimeUpdate) {
+      onTimeUpdate(videoRef.current.currentTime);
+    }
+  }, [onTimeUpdate]);
+
+  const handleSeeked = useCallback(() => {
+    if (videoRef.current && onTimeUpdate) {
+      onTimeUpdate(videoRef.current.currentTime);
+    }
+  }, [onTimeUpdate]);
 
   useEffect(() => {
     return () => {
@@ -33,6 +46,8 @@ export function VideoPreview({ videoInfo, onRemove, disabled }: VideoPreviewProp
           controls
           className="w-full h-full object-contain"
           preload="metadata"
+          onTimeUpdate={handleTimeUpdate}
+          onSeeked={handleSeeked}
         />
       </div>
       <div className="p-4 flex items-center justify-between gap-4">

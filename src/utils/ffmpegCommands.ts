@@ -18,14 +18,27 @@ export function buildExtractionArgs(
   settings: ExtractionSettings,
 ): string[] {
   const outputPattern = getOutputPattern(settings.format);
-  const args: string[] = ['-i', inputFilename];
+  const args: string[] = [];
 
-  // Video filter
-  if (settings.mode === 'fps') {
-    args.push('-vf', `fps=${settings.fps}`);
+  if (settings.mode === 'at-cursor') {
+    // For cursor mode: seek to the cursor time, extract 1 + 2*nearby frames
+    const totalFrames = 1 + 2 * settings.nearbyFrames;
+    // Seek before the cursor to capture nearby frames before it.
+    // Use a generous window: nearby * 1/24s (assuming ~24fps ballpark).
+    const seekOffset = settings.nearbyFrames / 24;
+    const seekTime = Math.max(0, settings.cursorTime - seekOffset);
+    args.push('-ss', String(seekTime), '-i', inputFilename);
+    args.push('-frames:v', String(totalFrames));
   } else {
-    // \\, in JS source → \, in the string → ffmpeg reads it as an escaped comma
-    args.push('-vf', `select=not(mod(n\\,${settings.nthFrame}))`, '-vsync', 'vfr');
+    args.push('-i', inputFilename);
+
+    // Video filter
+    if (settings.mode === 'fps') {
+      args.push('-vf', `fps=${settings.fps}`);
+    } else {
+      // \\, in JS source → \, in the string → ffmpeg reads it as an escaped comma
+      args.push('-vf', `select=not(mod(n\\,${settings.nthFrame}))`, '-vsync', 'vfr');
+    }
   }
 
   // Output format quality

@@ -15,8 +15,10 @@ interface AppState {
   nthFrame: number;
   outputFormat: OutputFormat;
   jpgQuality: number;
+  nearbyFrames: number;
 
   // Transient state (not persisted)
+  cursorTime: number;
   status: ExtractionStatus;
   progress: number;
   progressLabel: string;
@@ -31,6 +33,8 @@ interface AppState {
   setNthFrame: (n: number) => void;
   setOutputFormat: (format: OutputFormat) => void;
   setJpgQuality: (quality: number) => void;
+  setNearbyFrames: (n: number) => void;
+  setCursorTime: (time: number) => void;
 
   // State actions
   setStatus: (status: ExtractionStatus) => void;
@@ -54,8 +58,10 @@ export const useAppStore = create<AppState>()(
       nthFrame: DEFAULT_SETTINGS.nthFrame,
       outputFormat: DEFAULT_SETTINGS.format,
       jpgQuality: DEFAULT_SETTINGS.jpgQuality,
+      nearbyFrames: DEFAULT_SETTINGS.nearbyFrames,
 
       // Transient state
+      cursorTime: 0,
       status: 'idle',
       progress: 0,
       progressLabel: '',
@@ -70,6 +76,8 @@ export const useAppStore = create<AppState>()(
       setNthFrame: (n) => set({ nthFrame: n }),
       setOutputFormat: (format) => set({ outputFormat: format }),
       setJpgQuality: (quality) => set({ jpgQuality: quality }),
+      setNearbyFrames: (n) => set({ nearbyFrames: n }),
+      setCursorTime: (time) => set({ cursorTime: time }),
 
       // State actions
       setStatus: (status) => set({ status }),
@@ -96,6 +104,8 @@ export const useAppStore = create<AppState>()(
           nthFrame: DEFAULT_SETTINGS.nthFrame,
           outputFormat: DEFAULT_SETTINGS.format,
           jpgQuality: DEFAULT_SETTINGS.jpgQuality,
+          nearbyFrames: DEFAULT_SETTINGS.nearbyFrames,
+          cursorTime: 0,
           status: 'idle',
           progress: 0,
           progressLabel: '',
@@ -113,6 +123,7 @@ export const useAppStore = create<AppState>()(
         nthFrame: state.nthFrame,
         outputFormat: state.outputFormat,
         jpgQuality: state.jpgQuality,
+        nearbyFrames: state.nearbyFrames,
       }),
     },
   ),

@@ -35,12 +35,15 @@ export default function App() {
     nthFrame,
     outputFormat,
     jpgQuality,
+    cursorTime,
+    nearbyFrames,
     setVideoInfo,
     setVideoFile,
     setStatus,
     setFrameCount,
     resetExtraction,
     resetAll,
+    setCursorTime,
   } = useAppStore();
 
   const { ffmpeg, load: loadFFmpeg } = useFFmpeg();
@@ -137,6 +140,8 @@ export default function App() {
         nthFrame,
         format: outputFormat,
         jpgQuality,
+        cursorTime,
+        nearbyFrames,
       });
 
       if (count > 0) {
@@ -156,6 +161,8 @@ export default function App() {
     nthFrame,
     outputFormat,
     jpgQuality,
+    cursorTime,
+    nearbyFrames,
     setStatus,
     setFrameCount,
   ]);
@@ -224,6 +231,7 @@ export default function App() {
               <VideoPreview
                 videoInfo={videoInfo}
                 onRemove={handleRemoveVideo}
+                onTimeUpdate={setCursorTime}
                 disabled={isExtracting}
               />
               <ExtractionSettings

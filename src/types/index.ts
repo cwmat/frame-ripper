@@ -1,4 +1,4 @@
-export type ExtractionMode = 'fps' | 'every-nth';
+export type ExtractionMode = 'fps' | 'every-nth' | 'at-cursor';
 
 export type OutputFormat = 'png' | 'jpg';
 
@@ -8,6 +8,8 @@ export interface ExtractionSettings {
   nthFrame: number;
   format: OutputFormat;
   jpgQuality: number;
+  cursorTime: number;
+  nearbyFrames: number;
 }
 
 export interface ExtractedFrame {

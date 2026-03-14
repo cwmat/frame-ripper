@@ -1,9 +1,15 @@
 import { motion } from 'framer-motion';
-import { Settings, Image, Hash } from 'lucide-react';
+import { Settings, Image, Hash, Crosshair } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { Button } from '../ui/Button';
 import { FPS_PRESETS } from '../../utils/constants';
 import type { ExtractionMode, OutputFormat } from '../../types';
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toFixed(2).padStart(5, '0')}`;
+}
 
 interface ExtractionSettingsProps {
   onExtract: () => void;
@@ -18,11 +24,14 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
     nthFrame,
     outputFormat,
     jpgQuality,
+    cursorTime,
+    nearbyFrames,
     setExtractionMode,
     setFps,
     setNthFrame,
     setOutputFormat,
     setJpgQuality,
+    setNearbyFrames,
   } = useAppStore();
 
   return (
@@ -42,8 +51,9 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
         <label className="text-sm text-[var(--text-secondary)]">Mode</label>
         <div className="flex gap-2">
           {[
-            { value: 'fps' as ExtractionMode, label: 'Extract at FPS', icon: Hash },
-            { value: 'every-nth' as ExtractionMode, label: 'Every Nth Frame', icon: Image },
+            { value: 'fps' as ExtractionMode, label: 'At FPS', icon: Hash },
+            { value: 'every-nth' as ExtractionMode, label: 'Every Nth', icon: Image },
+            { value: 'at-cursor' as ExtractionMode, label: 'At Cursor', icon: Crosshair },
           ].map(({ value, label, icon: Icon }) => (
             <button
               key={value}
@@ -68,8 +78,8 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
         </div>
       </div>
 
-      {/* FPS / Nth frame config */}
-      {extractionMode === 'fps' ? (
+      {/* Mode-specific config */}
+      {extractionMode === 'fps' && (
         <div className="space-y-3">
           <label className="text-sm text-[var(--text-secondary)]">
             Frames per second
@@ -109,7 +119,9 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
             placeholder="Custom FPS"
           />
         </div>
-      ) : (
+      )}
+
+      {extractionMode === 'every-nth' && (
         <div className="space-y-3">
           <label className="text-sm text-[var(--text-secondary)]">
             Every Nth frame (extract 1 frame every {nthFrame} frames)
@@ -129,6 +141,47 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
                        focus:border-[var(--accent)] transition-colors
                        disabled:opacity-50"
           />
+        </div>
+      )}
+
+      {extractionMode === 'at-cursor' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-[var(--text-secondary)]">
+              Cursor position
+            </label>
+            <span className="text-sm text-[var(--text-primary)] font-mono tabular-nums">
+              {formatTime(cursorTime)}
+            </span>
+          </div>
+          <p className="text-xs text-[var(--text-muted)]">
+            Seek the video to the desired position, then extract.
+          </p>
+          <div className="space-y-2">
+            <label className="text-sm text-[var(--text-secondary)]">
+              Nearby frames (each side)
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={50}
+              step={1}
+              value={nearbyFrames}
+              onChange={(e) =>
+                setNearbyFrames(Math.max(0, Math.min(50, parseInt(e.target.value) || 0)))
+              }
+              disabled={extracting}
+              className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-[var(--radius-md)]
+                         px-3 py-2 text-sm text-[var(--text-primary)] outline-none
+                         focus:border-[var(--accent)] transition-colors
+                         disabled:opacity-50"
+            />
+            <p className="text-xs text-[var(--text-muted)]">
+              {nearbyFrames === 0
+                ? 'Extract only the frame at cursor'
+                : `Extract ${1 + 2 * nearbyFrames} frames (${nearbyFrames} before + cursor + ${nearbyFrames} after)`}
+            </p>
+          </div>
         </div>
       )}
 

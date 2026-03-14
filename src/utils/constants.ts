@@ -34,6 +34,8 @@ export const DEFAULT_SETTINGS: ExtractionSettings = {
   nthFrame: 10,
   format: 'jpg',
   jpgQuality: 85,
+  cursorTime: 0,
+  nearbyFrames: 0,
 };
 
 export const STATUS_LABELS: Record<string, string> = {
