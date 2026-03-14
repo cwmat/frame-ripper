@@ -1,13 +1,14 @@
 import { motion } from 'framer-motion';
 import { Download, Trash2, Archive } from 'lucide-react';
-import type { ExtractedFrame } from '../../types';
 import { formatFileSize } from '../../utils/fileUtils';
 import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
 
 interface DownloadPanelProps {
-  selectedFrames: ExtractedFrame[];
+  selectedCount: number;
+  selectedSize: number;
   totalFrames: number;
+  format: string;
   onDownloadZip: () => void;
   onClearAll: () => void;
   zipping: boolean;
@@ -15,15 +16,15 @@ interface DownloadPanelProps {
 }
 
 export function DownloadPanel({
-  selectedFrames,
+  selectedCount,
+  selectedSize,
   totalFrames,
-  // videoName used for ZIP filename (handled by parent)
+  format,
   onDownloadZip,
   onClearAll,
   zipping,
   zipProgress,
 }: DownloadPanelProps) {
-  const totalSize = selectedFrames.reduce((sum, f) => sum + f.size, 0);
 
   return (
     <motion.div
@@ -41,7 +42,7 @@ export function DownloadPanel({
       <div className="grid grid-cols-3 gap-4 text-center">
         <div>
           <p className="text-2xl font-bold text-[var(--text-primary)] tabular-nums">
-            {selectedFrames.length}
+            {selectedCount}
           </p>
           <p className="text-xs text-[var(--text-muted)]">
             of {totalFrames} frames
@@ -49,13 +50,13 @@ export function DownloadPanel({
         </div>
         <div>
           <p className="text-2xl font-bold text-[var(--text-primary)]">
-            {formatFileSize(totalSize)}
+            {formatFileSize(selectedSize)}
           </p>
           <p className="text-xs text-[var(--text-muted)]">estimated size</p>
         </div>
         <div>
           <p className="text-2xl font-bold text-[var(--text-primary)] uppercase">
-            {selectedFrames[0]?.filename.split('.').pop() || '—'}
+            {format}
           </p>
           <p className="text-xs text-[var(--text-muted)]">format</p>
         </div>
@@ -70,13 +71,13 @@ export function DownloadPanel({
       <div className="flex gap-3">
         <Button
           onClick={onDownloadZip}
-          disabled={selectedFrames.length === 0 || zipping}
+          disabled={selectedCount === 0 || zipping}
           loading={zipping}
           size="lg"
           className="flex-1"
         >
           <Download className="w-4 h-4" />
-          {zipping ? 'Zipping…' : `Download ZIP (${selectedFrames.length} frames)`}
+          {zipping ? 'Zipping…' : `Download ZIP (${selectedCount} frames)`}
         </Button>
         <Button
           variant="danger"

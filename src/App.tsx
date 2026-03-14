@@ -16,10 +16,10 @@ import { useFFmpeg } from './hooks/useFFmpeg';
 import { useFrameExtractor } from './hooks/useFrameExtractor';
 import { useDownload } from './hooks/useDownload';
 import { useAppStore } from './store/appStore';
-import { clearFrames } from './store/frameDb';
+import { clearFrames, getFramesByIndices } from './store/frameDb';
 import { STATUS_LABELS } from './utils/constants';
 
-import type { ExtractedFrame, VideoInfo } from './types';
+import type { VideoInfo } from './types';
 
 export default function App() {
   const {
@@ -47,10 +47,22 @@ export default function App() {
   const { extract, cancel: cancelExtraction } = useFrameExtractor();
   const { downloadZip, downloadSingleFrame, zipping, zipProgress } = useDownload();
 
-  const [selectedFrames, setSelectedFrames] = useState<ExtractedFrame[]>([]);
+  // Lightweight selection state — no frame data held in memory
+  const selectedIndicesRef = useRef<Set<number>>(new Set());
+  const [selectedCount, setSelectedCount] = useState(0);
+  const [selectedSize, setSelectedSize] = useState(0);
   const objectUrlRef = useRef<string | null>(null);
 
   const isExtracting = ['loading-ffmpeg', 'reading-video', 'extracting', 'caching'].includes(status);
+
+  const handleSelectionChange = useCallback(
+    (indices: Set<number>, count: number, size: number) => {
+      selectedIndicesRef.current = indices;
+      setSelectedCount(count);
+      setSelectedSize(size);
+    },
+    [],
+  );
 
   // Handle video file drop
   const handleFileDrop = useCallback(
@@ -74,7 +86,8 @@ export default function App() {
       setVideoInfo(info);
       resetExtraction();
       clearFrames();
-      setSelectedFrames([]);
+      setSelectedCount(0);
+      setSelectedSize(0);
     },
     [setVideoFile, setVideoInfo, resetExtraction],
   );
@@ -87,7 +100,8 @@ export default function App() {
     }
     resetAll();
     clearFrames();
-    setSelectedFrames([]);
+    setSelectedCount(0);
+    setSelectedSize(0);
   }, [resetAll]);
 
   // Start extraction
@@ -96,7 +110,8 @@ export default function App() {
 
     // Clear previous results
     await clearFrames();
-    setSelectedFrames([]);
+    setSelectedCount(0);
+    setSelectedSize(0);
     setFrameCount(0);
 
     // Load FFmpeg if needed
@@ -145,17 +160,19 @@ export default function App() {
     setFrameCount,
   ]);
 
-  // Download ZIP
-  const handleDownloadZip = useCallback(() => {
-    if (selectedFrames.length === 0 || !videoInfo) return;
-    downloadZip(selectedFrames, videoInfo.name);
-  }, [selectedFrames, videoInfo, downloadZip]);
+  // Download ZIP — resolve selected frames from IndexedDB on demand
+  const handleDownloadZip = useCallback(async () => {
+    if (selectedIndicesRef.current.size === 0 || !videoInfo) return;
+    const frames = await getFramesByIndices(selectedIndicesRef.current);
+    downloadZip(frames, videoInfo.name);
+  }, [videoInfo, downloadZip]);
 
   // Clear all frames
   const handleClearAll = useCallback(async () => {
     await clearFrames();
     setFrameCount(0);
-    setSelectedFrames([]);
+    setSelectedCount(0);
+    setSelectedSize(0);
     resetExtraction();
     toast('All frames cleared', 'info');
   }, [setFrameCount, resetExtraction]);
@@ -255,13 +272,15 @@ export default function App() {
           <>
             <FrameGallery
               frameCount={frameCount}
-              onSelectionChange={setSelectedFrames}
+              onSelectionChange={handleSelectionChange}
               onDownloadFrame={downloadSingleFrame}
             />
 
             <DownloadPanel
-              selectedFrames={selectedFrames}
+              selectedCount={selectedCount}
+              selectedSize={selectedSize}
               totalFrames={frameCount}
+              format={outputFormat}
               onDownloadZip={handleDownloadZip}
               onClearAll={handleClearAll}
               zipping={zipping}

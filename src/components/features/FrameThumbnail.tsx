@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
 import { Download, Check } from 'lucide-react';
 import type { ExtractedFrame } from '../../types';
 
@@ -52,17 +51,27 @@ export const FrameThumbnail = memo(function FrameThumbnail({
     };
   }, [objectUrl]);
 
+  const handleToggle = useCallback(() => {
+    onToggleSelect(frame.index);
+  }, [onToggleSelect, frame.index]);
+
+  const handleDownload = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onDownload(frame);
+    },
+    [onDownload, frame],
+  );
+
   return (
-    <motion.div
+    <div
       ref={imgRef}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
       className={`
         relative group rounded-[var(--radius-md)] overflow-hidden
         border-2 transition-colors cursor-pointer
         ${selected ? 'border-[var(--accent)] glow-accent' : 'border-[var(--border)] hover:border-[var(--text-muted)]'}
       `}
-      onClick={() => onToggleSelect(frame.index)}
+      onClick={handleToggle}
     >
       {/* Image */}
       <div className="aspect-video bg-[var(--surface-2)]">
@@ -95,16 +104,13 @@ export const FrameThumbnail = memo(function FrameThumbnail({
       <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-black/60 text-xs text-white flex items-center justify-between">
         <span className="tabular-nums">#{frame.index + 1}</span>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDownload(frame);
-          }}
+          onClick={handleDownload}
           className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-[var(--accent)] cursor-pointer"
           title="Download frame"
         >
           <Download className="w-3.5 h-3.5" />
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 });

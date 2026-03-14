@@ -64,6 +64,11 @@ export async function getTotalSize(): Promise<number> {
   return frames.reduce((sum, f) => sum + f.size, 0);
 }
 
+export async function getFramesByIndices(indices: Set<number>): Promise<ExtractedFrame[]> {
+  const all = await getAllFrames();
+  return all.filter((f) => indices.has(f.index));
+}
+
 export async function clearFrames(): Promise<void> {
   const db = await getDb();
   await db.clear('frames');

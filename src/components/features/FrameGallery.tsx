@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Grid3X3, CheckSquare, Square } from 'lucide-react';
 import type { ExtractedFrame } from '../../types';
@@ -9,7 +9,7 @@ import { Spinner } from '../ui/Spinner';
 
 interface FrameGalleryProps {
   frameCount: number;
-  onSelectionChange: (selectedFrames: ExtractedFrame[]) => void;
+  onSelectionChange: (selectedIndices: Set<number>, selectedCount: number, selectedSize: number) => void;
   onDownloadFrame: (frame: ExtractedFrame) => void;
 }
 
@@ -17,6 +17,8 @@ export function FrameGallery({ frameCount, onSelectionChange, onDownloadFrame }:
   const [frames, setFrames] = useState<ExtractedFrame[]>([]);
   const [loadedFrameCount, setLoadedFrameCount] = useState<number | null>(null);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  // Keep a size lookup so we can compute selected size without iterating frame data
+  const frameSizeMap = useRef<Map<number, number>>(new Map());
 
   // Derive loading state instead of setting it inside the effect
   const loading = loadedFrameCount !== frameCount;
@@ -28,8 +30,13 @@ export function FrameGallery({ frameCount, onSelectionChange, onDownloadFrame }:
     getAllFrames().then((data) => {
       if (!cancelled) {
         setFrames(data);
-        // Select all by default
-        const allIndices = new Set(data.map((f) => f.index));
+        const sizeMap = new Map<number, number>();
+        const allIndices = new Set<number>();
+        for (const f of data) {
+          allIndices.add(f.index);
+          sizeMap.set(f.index, f.size);
+        }
+        frameSizeMap.current = sizeMap;
         setSelectedIndices(allIndices);
         setLoadedFrameCount(frameCount);
       }
@@ -40,11 +47,14 @@ export function FrameGallery({ frameCount, onSelectionChange, onDownloadFrame }:
     };
   }, [frameCount]);
 
-  // Notify parent of selection changes
+  // Notify parent of lightweight selection info
   useEffect(() => {
-    const selected = frames.filter((f) => selectedIndices.has(f.index));
-    onSelectionChange(selected);
-  }, [selectedIndices, frames, onSelectionChange]);
+    let size = 0;
+    for (const idx of selectedIndices) {
+      size += frameSizeMap.current.get(idx) ?? 0;
+    }
+    onSelectionChange(selectedIndices, selectedIndices.size, size);
+  }, [selectedIndices, onSelectionChange]);
 
   const toggleSelect = useCallback((index: number) => {
     setSelectedIndices((prev) => {
