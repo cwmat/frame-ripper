@@ -1,13 +1,31 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  FrameRipper — a fully client-side video-frame extractor. Core invariant:
+  video bytes never leave the browser.
+
+  Tech stack:
+  - React 19 + TypeScript, Vite 8, Tailwind CSS v4
+  - Zustand for app state, IndexedDB (idb) for bulk frame data
+  - ffmpeg.wasm (loaded at runtime from CDN, not bundled)
+  - JSZip for client-side zip downloads
+  - Vitest + jsdom for tests; ESLint + Prettier
+  - Deployed as a PWA to GitHub Pages (base path `/frame-ripper/`)
+
+  Architecture:
+  - Extraction pipeline: App.tsx → useFrameExtractor → ffmpeg.wasm → IndexedDB
+  - `src/utils/ffmpegCommands.ts` is the single source of truth for ffmpeg args
+  - State split: Zustand holds settings (persisted) + transient status;
+    IndexedDB holds frame bytes. Frames are NEVER held in React state —
+    resolve to Uint8Array on demand to avoid OOM on large videos.
+  - ffmpeg.wasm singleton (`src/wasm/ffmpegLoader.ts`) is reused across
+    extractions, never terminated on unmount.
+
+  Conventions:
+  - Tests live under `tests/` mirroring `src/utils/` (not colocated)
+  - Pure utilities are tested; ffmpeg.wasm and IndexedDB are not mocked
+  - Conventional commit messages, short and imperative
+  - `npm run build` runs typecheck (`tsc -b`) before `vite build`
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
