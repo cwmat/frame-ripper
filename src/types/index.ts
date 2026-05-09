@@ -11,6 +11,7 @@ export interface ExtractionSettings {
   cursorTime: number;
   nearbyFrames: number;
   reverse: boolean;
+  maxWidth: number;
 }
 
 export interface ExtractedFrame {

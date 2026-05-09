@@ -17,7 +17,7 @@ describe('getOutputPattern', () => {
 });
 
 describe('buildExtractionArgs', () => {
-  const base = { cursorTime: 0, nearbyFrames: 0, reverse: false };
+  const base = { cursorTime: 0, nearbyFrames: 0, reverse: false, maxWidth: 0 };
 
   it('builds fps mode args with jpg output', () => {
     const settings: ExtractionSettings = {
@@ -157,6 +157,84 @@ describe('buildExtractionArgs', () => {
     expect(parseFloat(args[ssIdx + 1])).toBe(0);
   });
 
+  describe('output width scaling', () => {
+    const fpsBase: ExtractionSettings = {
+      ...base,
+      mode: 'fps',
+      fps: 1,
+      nthFrame: 10,
+      format: 'jpg',
+      jpgQuality: 85,
+    };
+    const everyNthBase: ExtractionSettings = {
+      ...base,
+      mode: 'every-nth',
+      fps: 1,
+      nthFrame: 10,
+      format: 'jpg',
+      jpgQuality: 85,
+    };
+    const atCursorBase: ExtractionSettings = {
+      ...base,
+      mode: 'at-cursor',
+      fps: 1,
+      nthFrame: 10,
+      format: 'jpg',
+      jpgQuality: 85,
+      cursorTime: 5.5,
+      nearbyFrames: 0,
+    };
+
+    it('produces no scale clause in any mode when maxWidth=0', () => {
+      for (const settings of [fpsBase, everyNthBase, atCursorBase]) {
+        const args = buildExtractionArgs('input.mp4', settings);
+        const joined = args.join(' ');
+        expect(joined).not.toContain('scale=');
+        expect(joined).not.toContain(':-2');
+      }
+    });
+
+    it('appends scale to fps filter when maxWidth>0', () => {
+      const args = buildExtractionArgs('input.mp4', { ...fpsBase, maxWidth: 640 });
+      const vfIdx = args.indexOf('-vf');
+      expect(vfIdx).toBeGreaterThan(-1);
+      expect(args[vfIdx + 1]).toBe("fps=1,scale='min(iw\\,640)':-2");
+    });
+
+    it('appends scale to select filter and keeps -vsync vfr for every-nth', () => {
+      const args = buildExtractionArgs('input.mp4', { ...everyNthBase, maxWidth: 640 });
+      const vfIdx = args.indexOf('-vf');
+      expect(args[vfIdx + 1]).toBe(
+        "select=not(mod(n\\,10)),scale='min(iw\\,640)':-2",
+      );
+      expect(args).toContain('-vsync');
+      expect(args).toContain('vfr');
+    });
+
+    it('adds a fresh -vf scale flag for at-cursor mode', () => {
+      const args = buildExtractionArgs('input.mp4', { ...atCursorBase, maxWidth: 640 });
+      const vfIdx = args.indexOf('-vf');
+      expect(vfIdx).toBeGreaterThan(-1);
+      expect(args[vfIdx + 1]).toBe("scale='min(iw\\,640)':-2");
+      // input-side seek is preserved
+      expect(args[0]).toBe('-ss');
+      expect(args[1]).toBe('5.5');
+      expect(args[2]).toBe('-i');
+      expect(args[3]).toBe('input.mp4');
+      expect(args).toContain('-frames:v');
+    });
+
+    it('escapes the comma inside min() with a backslash', () => {
+      const args = buildExtractionArgs('input.mp4', { ...fpsBase, maxWidth: 1280 });
+      expect(args.join(' ')).toContain('min(iw\\,1280)');
+    });
+
+    it('treats negative maxWidth the same as 0 (no scale)', () => {
+      const args = buildExtractionArgs('input.mp4', { ...fpsBase, maxWidth: -1 });
+      expect(args.join(' ')).not.toContain('scale=');
+    });
+  });
+
   it('produces identical args regardless of reverse for each mode', () => {
     const modes: ExtractionMode[] = ['fps', 'every-nth', 'at-cursor'];
     for (const mode of modes) {
@@ -169,6 +247,7 @@ describe('buildExtractionArgs', () => {
         cursorTime: 3,
         nearbyFrames: 2,
         reverse: false,
+        maxWidth: 0,
       };
       const on: ExtractionSettings = { ...off, reverse: true };
       expect(buildExtractionArgs('input.mp4', on)).toEqual(

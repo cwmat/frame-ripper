@@ -38,6 +38,7 @@ export default function App() {
     cursorTime,
     nearbyFrames,
     reverse,
+    maxWidth,
     setVideoInfo,
     setVideoFile,
     setStatus,
@@ -144,6 +145,7 @@ export default function App() {
         cursorTime,
         nearbyFrames,
         reverse,
+        maxWidth,
       });
 
       if (count > 0) {
@@ -166,6 +168,7 @@ export default function App() {
     cursorTime,
     nearbyFrames,
     reverse,
+    maxWidth,
     setStatus,
     setFrameCount,
   ]);

@@ -28,6 +28,10 @@ export const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2 GB
 
 export const FPS_PRESETS = [0.5, 1, 2, 5, 10, 24, 30] as const;
 
+export const OUTPUT_WIDTH_PRESETS = [0, 1920, 1280, 854, 640] as const;
+
+export const MAX_OUTPUT_WIDTH = 7680;
+
 export const DEFAULT_SETTINGS: ExtractionSettings = {
   mode: 'fps',
   fps: 1,
@@ -37,6 +41,7 @@ export const DEFAULT_SETTINGS: ExtractionSettings = {
   cursorTime: 0,
   nearbyFrames: 0,
   reverse: false,
+  maxWidth: 0,
 };
 
 export const STATUS_LABELS: Record<string, string> = {
