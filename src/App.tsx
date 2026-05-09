@@ -174,11 +174,21 @@ export default function App() {
   ]);
 
   // Download ZIP — resolve selected frames from IndexedDB on demand
-  const handleDownloadZip = useCallback(async () => {
-    if (selectedIndicesRef.current.size === 0 || !videoInfo) return;
-    const frames = await getFramesByIndices(selectedIndicesRef.current);
-    downloadZip(frames, videoInfo.name);
-  }, [videoInfo, downloadZip]);
+  const handleDownloadZip = useCallback(
+    async (prefix?: string) => {
+      if (selectedIndicesRef.current.size === 0 || !videoInfo) return;
+      const frames = await getFramesByIndices(selectedIndicesRef.current);
+      downloadZip(frames, videoInfo.name, {
+        mode: extractionMode,
+        fps,
+        nthFrame,
+        cursorTime,
+        nearbyFrames,
+        filenamePrefix: prefix,
+      });
+    },
+    [videoInfo, downloadZip, extractionMode, fps, nthFrame, cursorTime, nearbyFrames],
+  );
 
   // Clear all frames
   const handleClearAll = useCallback(async () => {
@@ -291,6 +301,7 @@ export default function App() {
             />
 
             <DownloadPanel
+              videoName={videoInfo.name}
               selectedCount={selectedCount}
               selectedSize={selectedSize}
               totalFrames={frameCount}

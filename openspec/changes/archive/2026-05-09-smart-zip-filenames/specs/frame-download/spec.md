@@ -1,31 +1,4 @@
-# frame-download
-
-## Purpose
-
-How extracted frames leave the browser. Covers the JSZip-based bulk ZIP download (selected frames only), the per-frame single-image download, the ZIP filename convention, and the streaming/progress contract surfaced to the UI.
-
-## Requirements
-
-### Requirement: ZIP packaging of selected frames
-
-`downloadZip(frames, videoName, context)` SHALL package the supplied `ExtractedFrame[]` into a ZIP archive. Every frame SHALL be added inside a top-level folder named `frames`. Each entry's in-zip name SHALL be computed at packaging time per the "Source-aware in-zip entry names" and "Per-mode label selection" requirements; the frame's `filename` field SHALL NOT be used as the in-zip name.
-
-The `context` argument is a small object describing the extraction settings active for this archive — at minimum `{ mode, fps, nthFrame, cursorTime, nearbyFrames }` and an optional `filenamePrefix` carrying the user-edited prefix — used by the namer to choose between index and timestamp labels and to override the default source-derived prefix. `downloadZip` SHALL NOT depend on the full `ExtractionSettings` shape. When `filenamePrefix` is omitted or sanitizes to empty, the source-derived default SHALL be used.
-
-#### Scenario: frames are placed under frames/
-
-- **WHEN** `downloadZip` runs with two frames extracted from source `clip.mp4` in `fps` mode with no `filenamePrefix`
-- **THEN** the archive contains entries `frames/clip_0001.<ext>` and `frames/clip_0002.<ext>`
-
-#### Scenario: empty selection is a no-op
-
-- **WHEN** `downloadZip` is called with `frames.length === 0`
-- **THEN** the function returns immediately without creating a blob or triggering a download
-
-#### Scenario: stored frame.filename is not used as the entry name
-
-- **WHEN** `downloadZip` packages a frame whose `filename` is `frame_0042.jpg` from source `myvid.mp4` in `fps` mode at archive index `0`
-- **THEN** the in-zip entry path is `frames/myvid_0001.jpg` (not `frames/frame_0042.jpg`)
+## ADDED Requirements
 
 ### Requirement: Source-aware in-zip entry names
 
@@ -152,14 +125,28 @@ The chosen prefix SHALL be ephemeral local state — it SHALL NOT be persisted t
 - **WHEN** the user clears the prefix input (or types only whitespace) and clicks `Download ZIP` for source `clip.mp4`
 - **THEN** the resulting archive uses the prefix `clip` for both entries and outer filename
 
-### Requirement: STORE compression
+## MODIFIED Requirements
 
-The ZIP SHALL use `compression: 'STORE'` (no compression) because JPG and PNG payloads are already compressed; further DEFLATE adds CPU time without meaningful size reduction. `streamFiles: true` SHALL be set on `generateAsync`.
+### Requirement: ZIP packaging of selected frames
 
-#### Scenario: archive is uncompressed
+`downloadZip(frames, videoName, context)` SHALL package the supplied `ExtractedFrame[]` into a ZIP archive. Every frame SHALL be added inside a top-level folder named `frames`. Each entry's in-zip name SHALL be computed at packaging time per the "Source-aware in-zip entry names" and "Per-mode label selection" requirements; the frame's `filename` field SHALL NOT be used as the in-zip name.
 
-- **WHEN** `generateAsync` is called inside `downloadZip`
-- **THEN** the options include `compression: 'STORE'` and `streamFiles: true`
+The `context` argument is a small object describing the extraction settings active for this archive — at minimum `{ mode, fps, nthFrame, cursorTime, nearbyFrames }` and an optional `filenamePrefix` carrying the user-edited prefix — used by the namer to choose between index and timestamp labels and to override the default source-derived prefix. `downloadZip` SHALL NOT depend on the full `ExtractionSettings` shape. When `filenamePrefix` is omitted or sanitizes to empty, the source-derived default SHALL be used.
+
+#### Scenario: frames are placed under frames/
+
+- **WHEN** `downloadZip` runs with two frames extracted from source `clip.mp4` in `fps` mode with no `filenamePrefix`
+- **THEN** the archive contains entries `frames/clip_0001.<ext>` and `frames/clip_0002.<ext>`
+
+#### Scenario: empty selection is a no-op
+
+- **WHEN** `downloadZip` is called with `frames.length === 0`
+- **THEN** the function returns immediately without creating a blob or triggering a download
+
+#### Scenario: stored frame.filename is not used as the entry name
+
+- **WHEN** `downloadZip` packages a frame whose `filename` is `frame_0042.jpg` from source `myvid.mp4` in `fps` mode at archive index `0`
+- **THEN** the in-zip entry path is `frames/myvid_0001.jpg` (not `frames/frame_0042.jpg`)
 
 ### Requirement: ZIP filename convention
 
@@ -180,54 +167,3 @@ The downloaded ZIP filename SHALL follow the pattern `frame-ripper-<prefix>-<tim
 - **WHEN** `downloadZip` is called with `filenamePrefix = 'MyShoot'`
 - **THEN** the outer filename's `<prefix>` component is `MyShoot`
 - **AND** every in-zip entry's prefix component is `MyShoot`
-
-### Requirement: Progress reporting
-
-`downloadZip` SHALL expose `zipping` (boolean) and `zipProgress` (`0..1`) state. `zipping` SHALL be `true` from the moment generation starts until it finishes (success or thrown). `zipProgress` SHALL be updated from JSZip's `metadata.percent / 100` during generation and SHALL be reset to `0` in the `finally` block.
-
-#### Scenario: zipping flag toggles around generation
-
-- **WHEN** `downloadZip` starts
-- **THEN** `zipping` becomes `true` and `zipProgress` is reset to `0`
-- **WHEN** `downloadZip` finishes (resolved or thrown)
-- **THEN** `zipping` becomes `false` and `zipProgress` is reset to `0`
-
-#### Scenario: progress callback updates zipProgress
-
-- **WHEN** JSZip emits `metadata.percent = 50`
-- **THEN** `zipProgress` is set to `0.5`
-
-### Requirement: Single-frame download
-
-`downloadSingleFrame(frame)` SHALL trigger a browser download of a single frame as `frame.filename` with the correct MIME type derived from the filename suffix (`.png` → `image/png`, otherwise `image/jpeg`). The download SHALL be performed by creating a temporary `<a>`, clicking it, removing it from the DOM, and revoking the object URL.
-
-#### Scenario: PNG frame uses image/png MIME
-
-- **WHEN** `downloadSingleFrame` is called with a frame whose filename ends `.png`
-- **THEN** the temporary `Blob` is constructed with `type: 'image/png'`
-- **AND** the `<a>` element's `download` attribute equals `frame.filename`
-
-#### Scenario: JPG frame uses image/jpeg MIME
-
-- **WHEN** `downloadSingleFrame` is called with a frame whose filename ends `.jpg`
-- **THEN** the temporary `Blob` is constructed with `type: 'image/jpeg'`
-
-#### Scenario: object URL is revoked after click
-
-- **WHEN** the download click has been dispatched
-- **THEN** the temporary `<a>` is removed from the DOM
-- **AND** the object URL is revoked via `URL.revokeObjectURL`
-
-## Source anchors (codified 2026-05-09 at commit d92cbf4)
-
-- ZIP packaging — `src/hooks/useDownload.ts:31-59`
-- Empty-selection no-op — `src/hooks/useDownload.ts:33`
-- Source-aware entry names — `src/utils/zipNaming.ts:44-62`, `src/hooks/useDownload.ts:43-58`
-- Per-mode label selection — `src/utils/zipNaming.ts:32-35,49-55`
-- Invalid-timestamp fallback — `src/utils/zipNaming.ts:15-16,57-59`
-- Effective prefix resolution — `src/utils/zipNaming.ts:37-42`, `src/hooks/useDownload.ts:43-44`
-- User-controllable prefix UI — `src/components/features/DownloadPanel.tsx:31-44,82-101,111`
-- STORE compression — `src/hooks/useDownload.ts:61-70`
-- Filename convention — `src/hooks/useDownload.ts:73-74`, `src/utils/fileUtils.ts:37-39`
-- Progress reporting — `src/hooks/useDownload.ts:28-29,35-36,67-69,84-87`
-- Single-frame download — `src/hooks/useDownload.ts:92-103`

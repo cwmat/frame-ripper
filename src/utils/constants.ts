@@ -32,6 +32,8 @@ export const OUTPUT_WIDTH_PRESETS = [0, 1920, 1280, 854, 640] as const;
 
 export const MAX_OUTPUT_WIDTH = 7680;
 
+export const AT_CURSOR_NEIGHBOR_FPS = 24;
+
 export const DEFAULT_SETTINGS: ExtractionSettings = {
   mode: 'fps',
   fps: 1,
