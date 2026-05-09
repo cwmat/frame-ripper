@@ -58,6 +58,19 @@ The flow is **App.tsx → useFrameExtractor → ffmpeg.wasm → IndexedDB**, wit
 
 `vite.config.ts` sets `base: '/frame-ripper/'` for GitHub Pages — change this if the repo is renamed or hosted elsewhere, or assets will 404.
 
+## Spec-driven development with OpenSpec
+
+This project uses [OpenSpec](https://github.com/Fission-AI/OpenSpec) for spec-driven changes. Specs live in `openspec/specs/<capability>/spec.md`; in-flight changes live in `openspec/changes/<name>/` (proposal, design, specs delta, tasks); completed changes are archived under `openspec/changes/archive/YYYY-MM-DD-<name>/`. See [`AGENTS.md`](./AGENTS.md) for the canonical workflow description shared across all AI tools in this repo.
+
+| Situation | Use |
+|---|---|
+| New feature, blank slate | Official `/opsx:propose` → `/opsx:apply` → `/opsx:archive` |
+| Existing code with no spec | `/opsx-ext:codify <capability>` (one at a time, clean tree required) |
+| Bringing a spec from another project | `/opsx-ext:port <source-dir>` |
+| 3+ ported changes ready to ship | `/opsx-ext:bulk` after confirming order |
+
+The `opsx-ext:` namespace is custom to this repo — it covers brownfield/migration scenarios that OpenSpec doesn't ship native commands for. The body of each custom workflow is in `.claude/skills/openspec-ext-*/SKILL.md`.
+
 ## Project skills
 
 Custom skills live in `.claude/skills/`:
