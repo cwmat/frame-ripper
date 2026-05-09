@@ -1,10 +1,19 @@
-import { defineConfig } from 'vite';
+import { defineConfig, searchForWorkspaceRoot } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: '/frame-ripper/',
+  server: {
+    fs: {
+      // When running from a git worktree under .claude/worktrees/<name>/, the
+      // installed node_modules live at the parent project root, not inside the
+      // worktree. Allow the workspace root plus three levels up so Vite can
+      // serve packages like @ffmpeg/ffmpeg's worker bundle from there.
+      allow: [searchForWorkspaceRoot(process.cwd()), '..', '../..', '../../..'],
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),
