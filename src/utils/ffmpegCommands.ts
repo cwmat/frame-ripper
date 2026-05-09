@@ -1,4 +1,5 @@
 import type { ExtractionSettings, OutputFormat } from '../types';
+import { AT_CURSOR_NEIGHBOR_FPS } from './constants';
 
 /**
  * Map a 1-100 quality scale to ffmpeg's inverted 2-31 scale for JPEG.
@@ -48,8 +49,8 @@ export function buildExtractionArgs(
     // For cursor mode: seek to the cursor time, extract 1 + 2*nearby frames
     const totalFrames = 1 + 2 * settings.nearbyFrames;
     // Seek before the cursor to capture nearby frames before it.
-    // Use a generous window: nearby * 1/24s (assuming ~24fps ballpark).
-    const seekOffset = settings.nearbyFrames / 24;
+    // Use a generous window: nearby * 1/AT_CURSOR_NEIGHBOR_FPS s (assumed neighborhood fps).
+    const seekOffset = settings.nearbyFrames / AT_CURSOR_NEIGHBOR_FPS;
     const seekTime = Math.max(0, settings.cursorTime - seekOffset);
     args.push('-ss', String(seekTime), '-i', inputFilename);
     args.push('-frames:v', String(totalFrames));

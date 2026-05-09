@@ -73,4 +73,11 @@ describe('sanitizeFilename', () => {
   it('keeps safe characters', () => {
     expect(sanitizeFilename('test-file_v2.mp4')).toBe('test-file_v2.mp4');
   });
+
+  it('replaces whitespace with underscores rather than dropping it', () => {
+    // Whitespace is in the disallowed set, so each character becomes '_'.
+    // Callers wanting a "blank input → empty" check must trim() before calling.
+    expect(sanitizeFilename('   ')).toBe('___');
+    expect(sanitizeFilename('   '.trim())).toBe('');
+  });
 });
