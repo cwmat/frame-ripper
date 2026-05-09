@@ -10,6 +10,7 @@ export interface ExtractionSettings {
   jpgQuality: number;
   cursorTime: number;
   nearbyFrames: number;
+  reverse: boolean;
 }
 
 export interface ExtractedFrame {

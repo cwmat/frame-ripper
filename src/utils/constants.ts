@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: ExtractionSettings = {
   jpgQuality: 85,
   cursorTime: 0,
   nearbyFrames: 0,
+  reverse: false,
 };
 
 export const STATUS_LABELS: Record<string, string> = {
