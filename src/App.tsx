@@ -37,6 +37,7 @@ export default function App() {
     jpgQuality,
     cursorTime,
     nearbyFrames,
+    reverse,
     setVideoInfo,
     setVideoFile,
     setStatus,
@@ -142,6 +143,7 @@ export default function App() {
         jpgQuality,
         cursorTime,
         nearbyFrames,
+        reverse,
       });
 
       if (count > 0) {
@@ -163,6 +165,7 @@ export default function App() {
     jpgQuality,
     cursorTime,
     nearbyFrames,
+    reverse,
     setStatus,
     setFrameCount,
   ]);

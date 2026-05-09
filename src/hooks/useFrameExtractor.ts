@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import type { ExtractionSettings, ExtractedFrame, ExtractionStatus } from '../types';
-import { buildExtractionArgs } from '../utils/ffmpegCommands';
+import { buildExtractionArgs, computeFramePlacement } from '../utils/ffmpegCommands';
 import { generateId, getFileExtension } from '../utils/fileUtils';
 import { saveFrame } from '../store/frameDb';
 import { useAppStore } from '../store/appStore';
@@ -87,10 +87,17 @@ export function useFrameExtractor(): UseFrameExtractorReturn {
           const file = frameFiles[i];
           const data = (await ffmpeg.readFile(file.name)) as Uint8Array;
 
+          const { index, filename } = computeFramePlacement(
+            i,
+            totalFrames,
+            file.name,
+            settings.reverse,
+          );
+
           const frame: ExtractedFrame = {
             id: generateId(),
-            index: i,
-            filename: file.name,
+            index,
+            filename,
             data: new Uint8Array(data),
             size: data.byteLength,
           };
