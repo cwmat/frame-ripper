@@ -6,7 +6,7 @@ import type {
   OutputFormat,
   VideoInfo,
 } from '../types';
-import { DEFAULT_SETTINGS } from '../utils/constants';
+import { DEFAULT_SETTINGS, MAX_OUTPUT_WIDTH } from '../utils/constants';
 
 interface AppState {
   // Extraction settings (persisted)
@@ -17,6 +17,7 @@ interface AppState {
   jpgQuality: number;
   nearbyFrames: number;
   reverse: boolean;
+  maxWidth: number;
 
   // Transient state (not persisted)
   cursorTime: number;
@@ -37,6 +38,7 @@ interface AppState {
   setNearbyFrames: (n: number) => void;
   setCursorTime: (time: number) => void;
   setReverse: (value: boolean) => void;
+  setMaxWidth: (n: number) => void;
 
   // State actions
   setStatus: (status: ExtractionStatus) => void;
@@ -62,6 +64,7 @@ export const useAppStore = create<AppState>()(
       jpgQuality: DEFAULT_SETTINGS.jpgQuality,
       nearbyFrames: DEFAULT_SETTINGS.nearbyFrames,
       reverse: DEFAULT_SETTINGS.reverse,
+      maxWidth: DEFAULT_SETTINGS.maxWidth,
 
       // Transient state
       cursorTime: 0,
@@ -82,6 +85,10 @@ export const useAppStore = create<AppState>()(
       setNearbyFrames: (n) => set({ nearbyFrames: n }),
       setCursorTime: (time) => set({ cursorTime: time }),
       setReverse: (value) => set({ reverse: value }),
+      setMaxWidth: (n) =>
+        set({
+          maxWidth: Math.max(0, Math.min(MAX_OUTPUT_WIDTH, Math.floor(n) || 0)),
+        }),
 
       // State actions
       setStatus: (status) => set({ status }),
@@ -110,6 +117,7 @@ export const useAppStore = create<AppState>()(
           jpgQuality: DEFAULT_SETTINGS.jpgQuality,
           nearbyFrames: DEFAULT_SETTINGS.nearbyFrames,
           reverse: DEFAULT_SETTINGS.reverse,
+          maxWidth: DEFAULT_SETTINGS.maxWidth,
           cursorTime: 0,
           status: 'idle',
           progress: 0,
@@ -130,6 +138,7 @@ export const useAppStore = create<AppState>()(
         jpgQuality: state.jpgQuality,
         nearbyFrames: state.nearbyFrames,
         reverse: state.reverse,
+        maxWidth: state.maxWidth,
       }),
     },
   ),

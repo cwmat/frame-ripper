@@ -1,10 +1,4 @@
-# extraction-settings-persistence
-
-## Purpose
-
-How FrameRipper remembers the user's extraction preferences across reloads while keeping ephemeral session state out of localStorage. Owned by the Zustand store (`useAppStore`) with the `persist` middleware. Defines the persisted/transient split, the storage key, defaults, the two reset scopes, and the `error → status` link.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Persisted vs transient state split
 
@@ -25,15 +19,6 @@ The Zustand store SHALL persist exactly eight extraction-settings fields (`extra
 
 - **WHEN** the user sets `maxWidth=1280` and reloads the page
 - **THEN** the rehydrated `maxWidth` is `1280`
-
-### Requirement: Storage key
-
-The persisted settings SHALL be stored under the localStorage key `frame-ripper-settings` exactly. Renaming this key constitutes a breaking change.
-
-#### Scenario: key is fixed
-
-- **WHEN** the persist middleware writes to storage
-- **THEN** it uses the key `frame-ripper-settings`
 
 ### Requirement: Defaults
 
@@ -56,16 +41,6 @@ When no persisted state exists (first-time user) the store SHALL initialise from
 - **THEN** the rehydrated `maxWidth` value is `0`
 - **AND** subsequent extractions produce arguments with no `scale=` clause
 
-### Requirement: resetExtraction scope
-
-`resetExtraction()` SHALL clear only transient extraction state (`status='idle'`, `progress=0`, `progressLabel=''`, `frameCount=0`, `error=null`). It SHALL NOT touch persisted user settings (mode, fps, format, etc.) and SHALL NOT clear the loaded video. This is the action invoked when a new video is dropped or when Clear All runs.
-
-#### Scenario: settings survive resetExtraction
-
-- **WHEN** the user has set `fps=5`, `format='png'` and then triggers `resetExtraction()`
-- **THEN** `fps` is still `5`, `outputFormat` is still `png`
-- **AND** `status='idle'`, `progress=0`, `frameCount=0`, `error=null`
-
 ### Requirement: resetAll scope
 
 `resetAll()` SHALL reset every store field — including persisted settings — to its `DEFAULT_SETTINGS` value, clear `videoInfo`/`videoFile`, and zero out transient state. This is the action invoked when the user removes the loaded video or hits Start Over. All eight persisted settings, including `maxWidth`, SHALL be returned to their defaults.
@@ -76,26 +51,3 @@ When no persisted state exists (first-time user) the store SHALL initialise from
 - **THEN** every persisted setting is back to `DEFAULT_SETTINGS` (notably `maxWidth=0`)
 - **AND** `videoInfo` and `videoFile` are `null`
 - **AND** `status='idle'`, `progress=0`, `frameCount=0`, `error=null`
-
-### Requirement: Error sets status to error, clearing it returns to idle
-
-`setError(message)` SHALL set `error=message` AND `status='error'`. `setError(null)` SHALL clear the error AND set `status='idle'`. This guarantees the status state machine and the error string remain coherent without callers needing to remember to update both.
-
-#### Scenario: setting an error transitions status
-
-- **WHEN** `setError('Extraction failed')` is called
-- **THEN** the store has `error='Extraction failed'` and `status='error'`
-
-#### Scenario: clearing error returns to idle
-
-- **WHEN** `setError(null)` is called
-- **THEN** the store has `error=null` and `status='idle'`
-
-## Source anchors (codified 2026-05-09 at commit 7f12443)
-
-- Persisted vs transient split — `src/store/appStore.ts:11-30,131-143`
-- Storage key — `src/store/appStore.ts:132`
-- Defaults — `src/store/appStore.ts:59-77`, `src/utils/constants.ts:35-45`
-- resetExtraction scope — `src/store/appStore.ts:103-110`
-- resetAll scope — `src/store/appStore.ts:111-129`
-- Error → status link — `src/store/appStore.ts:100`

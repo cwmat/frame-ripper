@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import { Settings, Image, Hash, Crosshair, Rewind } from 'lucide-react';
+import { Settings, Image, Hash, Crosshair, Rewind, Scaling } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { Button } from '../ui/Button';
-import { FPS_PRESETS } from '../../utils/constants';
+import { FPS_PRESETS, MAX_OUTPUT_WIDTH, OUTPUT_WIDTH_PRESETS } from '../../utils/constants';
 import type { ExtractionMode, OutputFormat } from '../../types';
 
 function formatTime(seconds: number): string {
@@ -27,6 +27,7 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
     cursorTime,
     nearbyFrames,
     reverse,
+    maxWidth,
     setExtractionMode,
     setFps,
     setNthFrame,
@@ -34,6 +35,7 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
     setJpgQuality,
     setNearbyFrames,
     setReverse,
+    setMaxWidth,
   } = useAppStore();
 
   return (
@@ -240,6 +242,56 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
           </div>
         </motion.div>
       )}
+
+      {/* Max output width — orthogonal to mode */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-[var(--text-secondary)] flex items-center gap-2">
+            <Scaling className="w-4 h-4" />
+            Max output width
+          </label>
+          <span className="text-sm text-[var(--text-muted)] tabular-nums">
+            {maxWidth === 0 ? 'Original' : `${maxWidth} px`}
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {OUTPUT_WIDTH_PRESETS.map((preset) => (
+            <button
+              key={preset}
+              onClick={() => setMaxWidth(preset)}
+              disabled={extracting}
+              className={`
+                px-3 py-1.5 rounded-[var(--radius-sm)] text-sm transition-colors cursor-pointer
+                ${
+                  maxWidth === preset
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-[var(--surface-2)] text-[var(--text-secondary)] hover:bg-[var(--surface-3)]'
+                }
+                disabled:opacity-50 disabled:cursor-not-allowed
+              `}
+            >
+              {preset === 0 ? 'Original' : preset}
+            </button>
+          ))}
+        </div>
+        <input
+          type="number"
+          min={0}
+          max={MAX_OUTPUT_WIDTH}
+          step={1}
+          value={maxWidth}
+          onChange={(e) => setMaxWidth(parseInt(e.target.value) || 0)}
+          disabled={extracting}
+          className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-[var(--radius-md)]
+                     px-3 py-2 text-sm text-[var(--text-primary)] outline-none
+                     focus:border-[var(--accent)] transition-colors
+                     disabled:opacity-50"
+          placeholder="Custom width (0 = original)"
+        />
+        <p className="text-xs text-[var(--text-muted)] px-1">
+          Caps frame width in pixels. Won't upscale narrower videos.
+        </p>
+      </div>
 
       {/* Reverse order toggle — orthogonal to mode */}
       <div className="space-y-2">

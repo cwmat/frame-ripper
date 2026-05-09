@@ -29,12 +29,20 @@ export function computeFramePlacement(
   return { index: reversedIndex, filename };
 }
 
+function scaleFilterClause(maxWidth: number): string {
+  // \\, in JS source → \, in the string → ffmpeg reads it as an escaped comma
+  // (so the comma inside min() is not parsed as a filter-chain separator).
+  // min(iw,W) prevents upscaling narrower videos. -2 keeps aspect ratio with an even height.
+  return `scale='min(iw\\,${maxWidth})':-2`;
+}
+
 export function buildExtractionArgs(
   inputFilename: string,
   settings: ExtractionSettings,
 ): string[] {
   const outputPattern = getOutputPattern(settings.format);
   const args: string[] = [];
+  const scale = settings.maxWidth > 0 ? scaleFilterClause(settings.maxWidth) : null;
 
   if (settings.mode === 'at-cursor') {
     // For cursor mode: seek to the cursor time, extract 1 + 2*nearby frames
@@ -45,15 +53,27 @@ export function buildExtractionArgs(
     const seekTime = Math.max(0, settings.cursorTime - seekOffset);
     args.push('-ss', String(seekTime), '-i', inputFilename);
     args.push('-frames:v', String(totalFrames));
+    if (scale) {
+      args.push('-vf', scale);
+    }
   } else {
     args.push('-i', inputFilename);
 
-    // Video filter
+    // Video filter chain: selection filter + optional scale, joined by `,`
+    const filters: string[] = [];
     if (settings.mode === 'fps') {
-      args.push('-vf', `fps=${settings.fps}`);
+      filters.push(`fps=${settings.fps}`);
     } else {
       // \\, in JS source → \, in the string → ffmpeg reads it as an escaped comma
-      args.push('-vf', `select=not(mod(n\\,${settings.nthFrame}))`, '-vsync', 'vfr');
+      filters.push(`select=not(mod(n\\,${settings.nthFrame}))`);
+    }
+    if (scale) {
+      filters.push(scale);
+    }
+    args.push('-vf', filters.join(','));
+
+    if (settings.mode === 'every-nth') {
+      args.push('-vsync', 'vfr');
     }
   }
 
