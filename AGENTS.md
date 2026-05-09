@@ -61,6 +61,16 @@ These three workflows exist because OpenSpec doesn't ship native support for the
 
 Full body: [`.github/skills/openspec-ext-codify-from-code/SKILL.md`](./.github/skills/openspec-ext-codify-from-code/SKILL.md)
 
+#### `/opsx-ext-codify-bulk [scope]`
+
+**Bulk version of codify, for one-time brownfield onboarding.** Discovers candidate capability boundaries across `src/` (or a specified scope), shows the candidate list, and **waits for user approval before writing any spec**. After approval, loops over the single-codify workflow with quality floors that auto-halt if specs start coming out empty (signal that the boundaries are wrong).
+
+- Use this for the narrow case of adopting OpenSpec on a stable codebase as a one-time milestone. For incremental adoption, prefer single `/opsx-ext-codify`.
+- Push back on bad timing: actively-churning code, undecided boundaries, or "I want bulk to substitute for understanding the codebase" should all redirect to the single workflow.
+- Quality floor: halts if 2 consecutive specs write 0 requirements, or 3 are quality-flagged total. Don't power through — surface the boundary problem to the user.
+
+Full body: [`.github/skills/openspec-ext-codify-bulk/SKILL.md`](./.github/skills/openspec-ext-codify-bulk/SKILL.md)
+
 #### `/opsx-ext-port <source-dir> [target-name]`
 
 **Port a spec from another project, adapting design + tasks for this stack.** Preserves WHAT (requirements) verbatim; rewrites HOW (design.md) and STEPS (tasks.md) using this repo's stack and conventions.
@@ -86,7 +96,8 @@ Full body: [`.github/skills/openspec-ext-bulk-migrate/SKILL.md`](./.github/skill
 | Situation | Workflow |
 |---|---|
 | New feature, blank slate | `openspec new change` (official `propose → apply → archive`) |
-| Existing code with no spec | `/opsx-ext-codify <capability>` per stable capability, over time |
+| Existing code with no spec, one capability | `/opsx-ext-codify <capability>` (clean tree required) |
+| One-time onboarding, codify many capabilities | `/opsx-ext-codify-bulk` (mandatory boundary-approval gate) |
 | Bringing a spec from another project | `/opsx-ext-port <source-dir>` to scaffold a change |
 | 3+ ported changes ready to ship | `/opsx-ext-bulk` after confirming the order |
 

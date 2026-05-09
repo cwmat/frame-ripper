@@ -65,7 +65,8 @@ This project uses [OpenSpec](https://github.com/Fission-AI/OpenSpec) for spec-dr
 | Situation | Use |
 |---|---|
 | New feature, blank slate | Official `/opsx:propose` → `/opsx:apply` → `/opsx:archive` |
-| Existing code with no spec | `/opsx-ext:codify <capability>` (one at a time, clean tree required) |
+| Existing code with no spec, one capability | `/opsx-ext:codify <capability>` (clean tree required) |
+| One-time onboarding, codify many capabilities | `/opsx-ext:codify-bulk` (mandatory boundary-approval gate) |
 | Bringing a spec from another project | `/opsx-ext:port <source-dir>` |
 | 3+ ported changes ready to ship | `/opsx-ext:bulk` after confirming order |
 
@@ -87,6 +88,7 @@ Use them when the user's ask matches a skill's `description`.
 Custom companions to OpenSpec — clearly marked unofficial via the `opsx-ext:` prefix to distinguish from the official `opsx:` commands. Slash commands live in `.claude/commands/opsx-ext/` and delegate to skills in `.claude/skills/openspec-ext-*/`:
 
 - **`/opsx-ext:codify <capability>`** — reverse-engineer a baseline `openspec/specs/<capability>/spec.md` from existing code + tests in this brownfield repo. One capability per invocation. Requires a clean working tree.
+- **`/opsx-ext:codify-bulk [scope]`** — bulk version of codify for one-time onboarding. Discovers candidate boundaries → user approves the list → loops over single-codify with quality floors (auto-halts if specs come out empty, signaling wrong boundaries). Don't use on actively-churning code.
 - **`/opsx-ext:port <source-dir> [target-name]`** — port an openspec-shaped folder from another project into a new `openspec/changes/<name>/`, preserving the spec but rewriting design.md + tasks.md for this repo's stack.
 - **`/opsx-ext:bulk [name1,name2,...]`** — apply N pending changes in confirmed order with lint/build/test between each. Pauses on failure. For 3+ changes that ship together (e.g., the output of repeated `/opsx-ext:port` runs).
 

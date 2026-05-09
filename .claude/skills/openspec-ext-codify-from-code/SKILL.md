@@ -74,4 +74,5 @@ If a behavior isn't in the code or asserted by a test, do not write a requiremen
 
 The output is a normal canonical spec. From here:
 - A future change can delta against it via `/opsx:propose` → `specs/<capability>/spec.md` with `## MODIFIED Requirements`.
-- Run `/opsx-ext:codify` once per stable capability over time. Don't try to do them all at once — that contradicts OpenSpec's "build specs as you need them" philosophy.
+- Run `/opsx-ext:codify` once per stable capability over time. This is the recommended path — it aligns with OpenSpec's "build specs as you need them" philosophy.
+- For the narrow case where you genuinely want to codify *many* capabilities in one onboarding pass (stable codebase, one-time adoption milestone), see `/opsx-ext:codify-bulk`. It runs this same workflow in a loop with a mandatory user-approval gate on the boundary set, plus quality floors that halt the run if specs start coming out empty. Don't reach for the bulk version by default.

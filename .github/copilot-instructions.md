@@ -33,6 +33,7 @@ This repo also ships **custom companion prompts** under `.github/prompts/opsx-ex
 | Prompt | When to use |
 |---|---|
 | `/opsx-ext-codify <capability>` | Codify ONE existing capability into a baseline `openspec/specs/<capability>/spec.md` from observed code + tests. Requires a clean working tree. |
+| `/opsx-ext-codify-bulk [scope]` | Bulk codify many capabilities in one onboarding pass. Mandatory user-approval gate on the boundary set; auto-halts on quality floor. |
 | `/opsx-ext-port <source-dir>` | Port an external openspec-shaped spec into this repo as a new change, adapting design + tasks for this stack. |
 | `/opsx-ext-bulk` | Apply 3+ pending changes in confirmed order with lint/build/test between each. Pauses on failure. |
 
