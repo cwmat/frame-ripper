@@ -1,10 +1,24 @@
 import { useState, useCallback } from 'react';
 import JSZip from 'jszip';
-import type { ExtractedFrame } from '../types';
+import type { ExtractedFrame, ExtractionMode } from '../types';
 import { sanitizeFilename } from '../utils/fileUtils';
+import { buildZipEntryName, resolveZipPrefix } from '../utils/zipNaming';
+
+export interface DownloadZipContext {
+  mode: ExtractionMode;
+  fps: number;
+  nthFrame: number;
+  cursorTime: number;
+  nearbyFrames: number;
+  filenamePrefix?: string;
+}
 
 interface UseDownloadReturn {
-  downloadZip: (frames: ExtractedFrame[], videoName: string) => Promise<void>;
+  downloadZip: (
+    frames: ExtractedFrame[],
+    videoName: string,
+    context: DownloadZipContext,
+  ) => Promise<void>;
   downloadSingleFrame: (frame: ExtractedFrame) => void;
   zipping: boolean;
   zipProgress: number;
@@ -15,7 +29,7 @@ export function useDownload(): UseDownloadReturn {
   const [zipProgress, setZipProgress] = useState(0);
 
   const downloadZip = useCallback(
-    async (frames: ExtractedFrame[], videoName: string) => {
+    async (frames: ExtractedFrame[], videoName: string, context: DownloadZipContext) => {
       if (frames.length === 0) return;
 
       setZipping(true);
@@ -26,8 +40,22 @@ export function useDownload(): UseDownloadReturn {
         const folderName = 'frames';
         const folder = zip.folder(folderName)!;
 
-        for (const frame of frames) {
-          folder.file(frame.filename, frame.data);
+        const baseName = sanitizeFilename(videoName.replace(/\.[^.]+$/, ''));
+        const effectivePrefix = resolveZipPrefix(context.filenamePrefix, baseName);
+
+        for (let i = 0; i < frames.length; i++) {
+          const frame = frames[i];
+          const ext = frame.filename.endsWith('.png') ? '.png' : '.jpg';
+          const entryName = buildZipEntryName({
+            baseName: effectivePrefix,
+            mode: context.mode,
+            archiveIndex: i,
+            totalFrames: frames.length,
+            ext,
+            cursorTime: context.cursorTime,
+            nearbyFrames: context.nearbyFrames,
+          });
+          folder.file(entryName, frame.data);
         }
 
         const blob = await zip.generateAsync(
@@ -42,9 +70,8 @@ export function useDownload(): UseDownloadReturn {
         );
 
         // Trigger download
-        const baseName = sanitizeFilename(videoName.replace(/\.[^.]+$/, ''));
         const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
-        const zipFilename = `frame-ripper-${baseName}-${timestamp}.zip`;
+        const zipFilename = `frame-ripper-${effectivePrefix}-${timestamp}.zip`;
 
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
