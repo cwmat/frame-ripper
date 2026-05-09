@@ -69,6 +69,14 @@ Custom skills live in `.claude/skills/`:
 
 Use them when the user's ask matches a skill's `description`.
 
+### OpenSpec extension skills (`opsx-ext:` namespace)
+
+Custom companions to OpenSpec — clearly marked unofficial via the `opsx-ext:` prefix to distinguish from the official `opsx:` commands. Slash commands live in `.claude/commands/opsx-ext/` and delegate to skills in `.claude/skills/openspec-ext-*/`:
+
+- **`/opsx-ext:codify <capability>`** — reverse-engineer a baseline `openspec/specs/<capability>/spec.md` from existing code + tests in this brownfield repo. One capability per invocation. Requires a clean working tree.
+- **`/opsx-ext:port <source-dir> [target-name]`** — port an openspec-shaped folder from another project into a new `openspec/changes/<name>/`, preserving the spec but rewriting design.md + tasks.md for this repo's stack.
+- **`/opsx-ext:bulk [name1,name2,...]`** — apply N pending changes in confirmed order with lint/build/test between each. Pauses on failure. For 3+ changes that ship together (e.g., the output of repeated `/opsx-ext:port` runs).
+
 ## Tests
 
 Vitest with `jsdom` and `globals: true`. Tests live under `tests/` (mirroring `src/utils/`), not colocated. `tests/setup.ts` only imports `@testing-library/jest-dom`. Existing tests cover the pure utility surface (`ffmpegCommands`, `fileUtils`, `formatUtils`) — ffmpeg.wasm and IndexedDB are not mocked or exercised in tests.
