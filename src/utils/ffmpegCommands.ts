@@ -13,6 +13,22 @@ export function getOutputPattern(format: OutputFormat): string {
   return `frame_%04d.${format === 'jpg' ? 'jpg' : 'png'}`;
 }
 
+export function computeFramePlacement(
+  i: number,
+  total: number,
+  originalName: string,
+  reverse: boolean,
+): { index: number; filename: string } {
+  if (!reverse) {
+    return { index: i, filename: originalName };
+  }
+  const dot = originalName.lastIndexOf('.');
+  const ext = dot === -1 ? '' : originalName.slice(dot);
+  const reversedIndex = total - 1 - i;
+  const filename = `frame_${String(reversedIndex + 1).padStart(4, '0')}${ext}`;
+  return { index: reversedIndex, filename };
+}
+
 export function buildExtractionArgs(
   inputFilename: string,
   settings: ExtractionSettings,
