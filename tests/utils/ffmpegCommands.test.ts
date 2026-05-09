@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { buildExtractionArgs, getOutputPattern } from '../../src/utils/ffmpegCommands';
-import type { ExtractionSettings } from '../../src/types';
+import {
+  buildExtractionArgs,
+  computeFramePlacement,
+  getOutputPattern,
+} from '../../src/utils/ffmpegCommands';
+import type { ExtractionMode, ExtractionSettings } from '../../src/types';
 
 describe('getOutputPattern', () => {
   it('returns jpg pattern for jpg format', () => {
@@ -13,7 +17,7 @@ describe('getOutputPattern', () => {
 });
 
 describe('buildExtractionArgs', () => {
-  const base = { cursorTime: 0, nearbyFrames: 0 };
+  const base = { cursorTime: 0, nearbyFrames: 0, reverse: false };
 
   it('builds fps mode args with jpg output', () => {
     const settings: ExtractionSettings = {
@@ -151,5 +155,85 @@ describe('buildExtractionArgs', () => {
     const args = buildExtractionArgs('input.mp4', settings);
     const ssIdx = args.indexOf('-ss');
     expect(parseFloat(args[ssIdx + 1])).toBe(0);
+  });
+
+  it('produces identical args regardless of reverse for each mode', () => {
+    const modes: ExtractionMode[] = ['fps', 'every-nth', 'at-cursor'];
+    for (const mode of modes) {
+      const off: ExtractionSettings = {
+        mode,
+        fps: 2,
+        nthFrame: 5,
+        format: 'jpg',
+        jpgQuality: 75,
+        cursorTime: 3,
+        nearbyFrames: 2,
+        reverse: false,
+      };
+      const on: ExtractionSettings = { ...off, reverse: true };
+      expect(buildExtractionArgs('input.mp4', on)).toEqual(
+        buildExtractionArgs('input.mp4', off),
+      );
+    }
+  });
+});
+
+describe('computeFramePlacement', () => {
+  it('passes through original index and filename when reverse is false', () => {
+    expect(computeFramePlacement(0, 5, 'frame_0001.jpg', false)).toEqual({
+      index: 0,
+      filename: 'frame_0001.jpg',
+    });
+    expect(computeFramePlacement(4, 5, 'frame_0005.jpg', false)).toEqual({
+      index: 4,
+      filename: 'frame_0005.jpg',
+    });
+  });
+
+  it('is a no-op for total=1 even when reverse is true', () => {
+    const off = computeFramePlacement(0, 1, 'frame_0001.png', false);
+    const on = computeFramePlacement(0, 1, 'frame_0001.png', true);
+    expect(on).toEqual(off);
+    expect(on.filename).toBe('frame_0001.png');
+    expect(on.index).toBe(0);
+  });
+
+  it('swaps the pair when total=2 and reverse is true', () => {
+    expect(computeFramePlacement(0, 2, 'frame_0001.jpg', true)).toEqual({
+      index: 1,
+      filename: 'frame_0002.jpg',
+    });
+    expect(computeFramePlacement(1, 2, 'frame_0002.jpg', true)).toEqual({
+      index: 0,
+      filename: 'frame_0001.jpg',
+    });
+  });
+
+  it('maps i=0 to last position and i=N-1 to first position for arbitrary N', () => {
+    const N = 17;
+    const first = computeFramePlacement(0, N, 'frame_0001.png', true);
+    const last = computeFramePlacement(N - 1, N, `frame_${String(N).padStart(4, '0')}.png`, true);
+    expect(first.index).toBe(N - 1);
+    expect(first.filename).toBe(`frame_${String(N).padStart(4, '0')}.png`);
+    expect(last.index).toBe(0);
+    expect(last.filename).toBe('frame_0001.png');
+  });
+
+  it('produces unique zero-padded filenames across the full range', () => {
+    const N = 12;
+    const seen = new Set<string>();
+    for (let i = 0; i < N; i++) {
+      const { filename, index } = computeFramePlacement(i, N, 'frame_0001.jpg', true);
+      expect(filename).toMatch(/^frame_\d{4}\.jpg$/);
+      expect(index).toBeGreaterThanOrEqual(0);
+      expect(index).toBeLessThan(N);
+      seen.add(filename);
+    }
+    expect(seen.size).toBe(N);
+  });
+
+  it('preserves the extension for both jpg and png', () => {
+    expect(computeFramePlacement(2, 5, 'frame_0003.jpg', true).filename).toMatch(/\.jpg$/);
+    expect(computeFramePlacement(2, 5, 'frame_0003.png', true).filename).toMatch(/\.png$/);
   });
 });

@@ -16,6 +16,7 @@ interface AppState {
   outputFormat: OutputFormat;
   jpgQuality: number;
   nearbyFrames: number;
+  reverse: boolean;
 
   // Transient state (not persisted)
   cursorTime: number;
@@ -35,6 +36,7 @@ interface AppState {
   setJpgQuality: (quality: number) => void;
   setNearbyFrames: (n: number) => void;
   setCursorTime: (time: number) => void;
+  setReverse: (value: boolean) => void;
 
   // State actions
   setStatus: (status: ExtractionStatus) => void;
@@ -59,6 +61,7 @@ export const useAppStore = create<AppState>()(
       outputFormat: DEFAULT_SETTINGS.format,
       jpgQuality: DEFAULT_SETTINGS.jpgQuality,
       nearbyFrames: DEFAULT_SETTINGS.nearbyFrames,
+      reverse: DEFAULT_SETTINGS.reverse,
 
       // Transient state
       cursorTime: 0,
@@ -78,6 +81,7 @@ export const useAppStore = create<AppState>()(
       setJpgQuality: (quality) => set({ jpgQuality: quality }),
       setNearbyFrames: (n) => set({ nearbyFrames: n }),
       setCursorTime: (time) => set({ cursorTime: time }),
+      setReverse: (value) => set({ reverse: value }),
 
       // State actions
       setStatus: (status) => set({ status }),
@@ -105,6 +109,7 @@ export const useAppStore = create<AppState>()(
           outputFormat: DEFAULT_SETTINGS.format,
           jpgQuality: DEFAULT_SETTINGS.jpgQuality,
           nearbyFrames: DEFAULT_SETTINGS.nearbyFrames,
+          reverse: DEFAULT_SETTINGS.reverse,
           cursorTime: 0,
           status: 'idle',
           progress: 0,
@@ -124,6 +129,7 @@ export const useAppStore = create<AppState>()(
         outputFormat: state.outputFormat,
         jpgQuality: state.jpgQuality,
         nearbyFrames: state.nearbyFrames,
+        reverse: state.reverse,
       }),
     },
   ),

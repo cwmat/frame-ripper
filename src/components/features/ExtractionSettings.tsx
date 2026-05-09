@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Settings, Image, Hash, Crosshair } from 'lucide-react';
+import { Settings, Image, Hash, Crosshair, Rewind } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { Button } from '../ui/Button';
 import { FPS_PRESETS } from '../../utils/constants';
@@ -26,12 +26,14 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
     jpgQuality,
     cursorTime,
     nearbyFrames,
+    reverse,
     setExtractionMode,
     setFps,
     setNthFrame,
     setOutputFormat,
     setJpgQuality,
     setNearbyFrames,
+    setReverse,
   } = useAppStore();
 
   return (
@@ -238,6 +240,48 @@ export function ExtractionSettings({ onExtract, extracting, disabled }: Extracti
           </div>
         </motion.div>
       )}
+
+      {/* Reverse order toggle — orthogonal to mode */}
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => setReverse(!reverse)}
+          disabled={extracting}
+          aria-pressed={reverse}
+          className={`
+            w-full flex items-center justify-between gap-3 px-4 py-3
+            rounded-[var(--radius-md)] text-sm font-medium transition-colors
+            cursor-pointer
+            ${
+              reverse
+                ? 'bg-[var(--accent)] text-white glow-accent'
+                : 'bg-[var(--surface-2)] text-[var(--text-secondary)] hover:bg-[var(--surface-3)]'
+            }
+            disabled:opacity-50 disabled:cursor-not-allowed
+          `}
+        >
+          <span className="flex items-center gap-2">
+            <Rewind className="w-4 h-4" />
+            Reverse order
+          </span>
+          <span
+            className={`
+              relative inline-flex h-5 w-9 items-center rounded-full transition-colors
+              ${reverse ? 'bg-white/30' : 'bg-[var(--surface-3)]'}
+            `}
+          >
+            <span
+              className={`
+                inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                ${reverse ? 'translate-x-4' : 'translate-x-0.5'}
+              `}
+            />
+          </span>
+        </button>
+        <p className="text-xs text-[var(--text-muted)] px-1">
+          Last frame becomes #1.
+        </p>
+      </div>
 
       {/* Extract button */}
       <Button
